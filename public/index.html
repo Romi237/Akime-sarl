@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A-KIME Sarl | Génie Civil & Constructions Métalliques | Cameroun</title>
+  <meta name="description" content="A-KIME Sarl — spécialiste en gros œuvre, génie civil, construction métallique, finition, rénovation, nettoyage et traitement des eaux. Depuis 2005.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- ══ NAVBAR ══════════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-container">
+    <a href="#hero" class="logo">
+        <img src="images/logo.png" alt="A-KIME Logo">
+          <div class="logo-text-container">
+            <span class="logo-text">A-KIME</span>
+            <span class="logo-subtext">Sarl</span>
+          </div>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#hero"          class="active">ACCUEIL</a></li>
+      <li><a href="#services">SERVICES</a></li>
+      <li><a href="#portfolio">PROJETS</a></li>
+      <li><a href="#about">À PROPOS</a></li>
+      <li><a href="#contact">CONTACT</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a href="tel:+237698012093" class="nav-phone">
+        <i class="fas fa-phone-alt"></i>
+      </a>
+      <a href="signup.html" class="btn-signup">INSCRIPTION</a>
+      <a href="login.html" class="btn-connexion">CONNEXION</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ════════════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-left animate-fadeInUp">
+        <div class="hero-tag">A-KIME — COMME JAMAIS AUPARAVANT</div>
+        <h1 class="hero-heading">
+          Construisons<br>
+          <span>Votre Avenir</span>
+          Ensemble
+        </h1>
+        <p class="hero-desc">
+          Spécialiste en gros œuvre, génie civil, construction métallique, finition,
+          rénovation, nettoyage des entreprises et traitement des eaux -
+          A-KIME, une entreprise multiservices à votre écoute.
+        </p>
+        <div class="hero-checks">
+          <div class="hero-check"><i class="fas fa-check-circle"></i> Plus de 50+ projets réalisés</div>
+          <div class="hero-check"><i class="fas fa-check-circle"></i> Délais garantis</div>
+          <div class="hero-check"><i class="fas fa-check-circle"></i> Équipe certifiée</div>
+        </div>
+        <div class="hero-btns">
+          <a href="#contact" class="btn btn-gold"><i class="fas fa-paper-plane"></i> DEMANDER UN DEVIS</a>
+          <a href="#services" class="btn btn-outline">NOS SERVICES</a>
+        </div>
+      </div>
+
+      <div class="hero-right animate-fadeInUp animate-delay-2">
+        <img src="images/african_female.png" alt="African Female" class="african-female-img">
+      </div>
+  <div id="discoverBtn" class="discover-btn" onclick="document.getElementById('stats').scrollIntoView({behavior:'smooth'})">
+    DÉCOUVRIR <br><i class="fas fa-chevron-down"></i>
+  </div>
+</section>
+
+<!-- ══ STATS BAR ════════════════════════════════════════════════ -->
+<div class="stats-bar" id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-num">50+</div><div class="stat-label">Projets Réalisés</div></div>
+      <div class="stat-item"><div class="stat-num">8 ans</div><div class="stat-label">D'Expérience</div></div>
+      <div class="stat-item"><div class="stat-num">80+</div><div class="stat-label">Clients Satisfaits</div></div>
+      <div class="stat-item"><div class="stat-num">10</div><div class="stat-label">Régions Couvertes</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SERVICES ════════════════════════════════════════════════ -->
+<section class="services-section" id="services">
+  <div class="container">
+    <div class="services-header">
+      <div>
+        <div class="section-label">NOS EXPERTISES</div>
+        <h2 class="section-title">Des Services Complets<br><span>Pour Chaque Besoin</span></h2>
+      </div>
+      <p class="section-body">De la conception à la livraison, nous offrons une gamme complète de services pour vos projets de construction et d'ingénierie.</p>
+    </div>
+
+    <div class="services-layout" id="servicesLayout">
+      <!-- Tabs sidebar -->
+      <div class="services-tabs" id="servicesTabs">
+        <div class="service-tab active" data-panel="gros-oeuvre">
+          <div class="tab-icon"><i class="fas fa-building"></i></div>
+          <span class="tab-name">Gros Œuvre</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="finition">
+          <div class="tab-icon"><i class="fas fa-paint-roller"></i></div>
+          <span class="tab-name">Finition</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="renovation">
+          <div class="tab-icon"><i class="fas fa-tools"></i></div>
+          <span class="tab-name">Rénovation</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="metallique">
+          <div class="tab-icon"><i class="fas fa-industry"></i></div>
+          <span class="tab-name">Construction Métallique</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="genie-civil">
+          <div class="tab-icon"><i class="fas fa-hard-hat"></i></div>
+          <span class="tab-name">Génie Civil</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="nettoyage">
+          <div class="tab-icon"><i class="fas fa-broom"></i></div>
+          <span class="tab-name">Nettoyage des Entreprises</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+        <div class="service-tab" data-panel="pure-water">
+          <div class="tab-icon"><i class="fas fa-tint"></i></div>
+          <span class="tab-name">Pure Water</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="services-panel">
+        <div class="service-panel active" id="panel-gros-oeuvre">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-building"></i><span>Gros Œuvre</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">FONDATIONS</span>
+              <span class="panel-tag">BÉTON ARMÉ</span>
+              <span class="panel-tag">MAÇONNERIE</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Gros Œuvre</h3>
+            <p class="panel-desc">Fondations, structures en béton armé, maçonnerie. Nous garantissons la solidité et la durabilité de vos constructions grâce à des matériaux certifiés et des techniques éprouvées.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-finition">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-paint-roller"></i><span>Finition</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">PEINTURE</span>
+              <span class="panel-tag">CARRELAGE</span>
+              <span class="panel-tag">FAUX-PLAFONDS</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Finition & Décoration</h3>
+            <p class="panel-desc">Peinture intérieure et extérieure, revêtements de sol, faux-plafonds, menuiserie aluminium. Des finitions soignées pour sublimer vos espaces.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-renovation">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-tools"></i><span>Rénovation</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">RÉHABILITATION</span>
+              <span class="panel-tag">MODERNISATION</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Rénovation</h3>
+            <p class="panel-desc">Réhabilitation complète de bâtiments, modernisation des installations, mise aux normes. Redonnez vie à vos espaces avec l'expertise A-KIME.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-metallique">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-industry"></i><span>Construction Métallique</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">CHARPENTES</span>
+              <span class="panel-tag">HANGARS</span>
+              <span class="panel-tag">STRUCTURES</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Construction Métallique</h3>
+            <p class="panel-desc">Charpentes métalliques, hangars industriels, structures spéciales, menuiserie aluminium, cuves et réservoirs. Solutions robustes et durables.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-genie-civil">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-hard-hat"></i><span>Génie Civil</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">ROUTES</span>
+              <span class="panel-tag">PONTS</span>
+              <span class="panel-tag">INFRASTRUCTURE</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Génie Civil</h3>
+            <p class="panel-desc">Construction de routes, ponts, ouvrages hydrauliques et infrastructures urbaines. Notre expertise en génie civil garantit des ouvrages durables et conformes aux normes.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-nettoyage">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-broom"></i><span>Nettoyage</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">ENTREPRISES</span>
+              <span class="panel-tag">INDUSTRIES</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Nettoyage des Entreprises</h3>
+            <p class="panel-desc">Services de nettoyage professionnel pour bureaux, usines, chantiers et espaces industriels. Équipes spécialisées, matériels adaptés, résultats impeccables.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+
+        <div class="service-panel" id="panel-pure-water">
+          <div class="panel-image" style="position:relative;">
+            <div class="panel-image-placeholder"><i class="fas fa-tint"></i><span>Pure Water</span></div>
+            <div class="panel-tags">
+              <span class="panel-tag">TRAITEMENT</span>
+              <span class="panel-tag">DISTRIBUTION</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <h3 class="panel-title">Pure Water</h3>
+            <p class="panel-desc">Systèmes de traitement et de distribution d'eau potable pour entreprises, industries et collectivités. Solutions complètes de la conception à l'installation.</p>
+            <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PORTFOLIO ════════════════════════════════════════════════ -->
+<section class="portfolio-section" id="portfolio">
+  <div class="container">
+    <div class="portfolio-header">
+      <div class="section-label" style="justify-content:center;">NOS RÉALISATIONS</div>
+      <h2 class="section-title">Projets qui Parlent<br><span>par Eux-Mêmes</span></h2>
+    </div>
+
+    <div class="portfolio-filters">
+      <button class="filter-btn active" data-filter="all">TOUS</button>
+      <button class="filter-btn" data-filter="gros-oeuvre">GROS ŒUVRE</button>
+      <button class="filter-btn" data-filter="civil">GÉNIE CIVIL</button>
+      <button class="filter-btn" data-filter="metallique">MÉTALLIQUE</button>
+      <button class="filter-btn" data-filter="renovation">RÉNOVATION</button>
+      <button class="filter-btn" data-filter="pure-water">PURE WATER</button>
+      <button class="filter-btn" data-filter="nettoyage">NETTOYAGE</button>
+    </div>
+
+    <div class="portfolio-grid" id="portfolioGrid">
+      <!-- Populated dynamically via JS -->
+    </div>
+
+    <div class="portfolio-cta">
+      <a href="#contact" class="btn btn-gold">VOIR TOUS NOS PROJETS <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ABOUT ════════════════════════════════════════════════════ -->
+<section class="about-section" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-image-wrap">
+        <div class="about-image">
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,.25);">
+            <i class="fas fa-city" style="font-size:4rem;color:rgba(200,169,81,.25);"></i>
+            <span style="font-size:.85rem;font-weight:600;">Photo bâtiment A-KIME</span>
+          </div>
+        </div>
+        <div class="about-badge">
+          <div class="about-badge-num">8+</div>
+          <div class="about-badge-label">ANNÉES D'EXCELLENCE<br>AVEC A-KIME</div>
+        </div>
+      </div>
+
+      <div class="about-text">
+        <div class="section-label">QUI SOMMES-NOUS</div>
+        <h2 class="section-title">Un Partenaire de<br><span>Confiance Depuis 2017</span></h2>
+        <p class="section-body">
+          A-KIME est une entreprise multiservices spécialisée dans la construction, le génie civil, la rénovation et les services environnementaux. Implantée en Afrique centrale depuis plus de 18 ans, nous avons bâti notre réputation sur la qualité, la rigueur et le respect des délais.
+        </p>
+        <p class="section-body" style="margin-top:12px;margin-bottom:28px;">
+          Notre approche intégrée de l'étude de faisabilité à la livraison clé en main. Cette approche nous permet de vous offrir un service complet, sans intermédiaires, pour des résultats à la hauteur de vos ambitions.
+        </p>
+
+        <div class="about-features">
+          <div class="about-feature">
+            <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+              <div class="feature-title">Sécurité Avant Tout</div>
+              <div class="feature-body">Normes strictes sur tous nos chantiers, certifications en vigueur.</div>
+            </div>
+          </div>
+          <div class="about-feature">
+            <div class="feature-icon"><i class="fas fa-medal"></i></div>
+            <div>
+              <div class="feature-title">Qualité Certifiée</div>
+              <div class="feature-body">Matériaux homologués, contrôle qualité à chaque étape.</div>
+            </div>
+          </div>
+          <div class="about-feature">
+            <div class="feature-icon"><i class="fas fa-users"></i></div>
+            <div>
+              <div class="feature-title">Équipe Experte</div>
+              <div class="feature-body">140+ professionnels qualifiés : ingénieurs, techniciens, ouvriers spécialisés.</div>
+            </div>
+          </div>
+          <div class="about-feature">
+            <div class="feature-icon"><i class="fas fa-clock"></i></div>
+            <div>
+              <div class="feature-title">Délais Respectés</div>
+              <div class="feature-body">Planification rigoureuse, reporting hebdomadaire, livraison garantie.</div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#contact" class="btn btn-gold">CONTACTEZ-NOUS <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ EQUIPMENT SHOWCASE ═══════════════════════════════════════ -->
+<section class="equipment-showcase-section" id="equipment">
+  <div class="container">
+    <div class="section-label" style="justify-content:center;">NOTRE ÉQUIPEMENT</div>
+    <h2 class="section-title text-center">Matériel professionnel<br><span>au service de vos projets</span></h2>
+    <p class="section-body text-center" style="max-width:700px;margin:0 auto 40px;color:var(--muted-foreground);">
+      Nous mettons à disposition des engins et outils modernes pour garantir efficacité, sécurité et rapidité sur l'ensemble de nos chantiers.
+    </p>
+
+    <div class="equipment-filter" id="equipmentFilter">
+      <button type="button" class="filter-btn active" data-category="all">Tous</button>
+      <button type="button" class="filter-btn" data-category="excavation">Excavation</button>
+      <button type="button" class="filter-btn" data-category="levage">Levage</button>
+      <button type="button" class="filter-btn" data-category="transport">Transport</button>
+      <button type="button" class="filter-btn" data-category="compactage">Compactage</button>
+      <button type="button" class="filter-btn" data-category="outillage">Outillage</button>
+      <button type="button" class="filter-btn" data-category="divers">Divers</button>
+    </div>
+
+    <div class="equipment-showcase-grid" id="equipmentShowcaseGrid">
+      <div class="loading-state">Chargement des équipements...</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TESTIMONIALS ══════════════════════════════════════════════ -->
+<section class="testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="testimonials-header">
+      <div class="section-label" style="justify-content:center;">TÉMOIGNAGES</div>
+      <h2 class="section-title text-center">Ce que Disent<br><span>Nos Clients</span></h2>
+    </div>
+
+    <div class="testimonials-slider">
+      <div class="slider-controls">
+        <button class="slider-btn" id="sliderPrev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+        <div class="slider-dots"></div>
+        <button class="slider-btn" id="sliderNext" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══════════════════════════════════════════════════ -->
+<section class="contact-section" id="contact">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <div class="section-label">CONTACTEZ-NOUS</div>
+        <h2 class="section-title" style="color:var(--white);">Parlons de Votre<br><span>Prochain Projet</span></h2>
+        <p>Décrivez votre projet et notre équipe vous répond sous 24h avec une proposition personnalisée et sans engagement.</p>
+
+        <div class="contact-details">
+          <div class="contact-detail">
+            <div class="detail-icon"><i class="fas fa-phone-alt"></i></div>
+            <div>
+              <div class="detail-label">TÉLÉPHONE</div>
+              <div class="detail-value" id="companyPhone">+237 698 01 20 93</div>
+              <div class="detail-value" style="font-size:.82rem;color:rgba(255,255,255,.45);">+237 677 000 000</div>
+            </div>
+          </div>
+          <div class="contact-detail">
+            <div class="detail-icon"><i class="fas fa-envelope"></i></div>
+            <div>
+              <div class="detail-label">EMAIL</div>
+              <div class="detail-value" id="companyEmail">infosakime@gmail.com</div>
+            </div>
+          </div>
+          <div class="contact-detail">
+            <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div>
+              <div class="detail-label">SIÈGE SOCIAL</div>
+              <div class="detail-value" id="companyAddress">Yaoundé, Cameroun</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:32px;">
+          <div style="font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;">HORAIRES D'OUVERTURE</div>
+          <div class="hours-grid">
+            <div class="hours-row"><span class="hours-day">Lun – Ven</span><span class="hours-time">07h30 – 17h30</span></div>
+            <div class="hours-row"><span class="hours-day">Samedi</span><span class="hours-time">08h00 – 13h00</span></div>
+            <div class="hours-row"><span class="hours-day">Urgences</span><span class="hours-time">24h/24 – 7j/7</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-wrap">
+        <div class="form-title">Obtenez Votre Devis Gratuit</div>
+        <div class="form-sub">Réponse garantie sous 24h ouvrables. Devis 100% gratuit et sans engagement.</div>
+        <div class="form-success" id="formSuccess">
+          <i class="fas fa-check-circle" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:10px;"></i>
+          Message envoyé ! Nous vous répondons sous 24h.
+        </div>
+        <form id="contactForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="contactName">NOM COMPLET <span>*</span></label>
+              <input type="text" id="contactName" name="name" placeholder="Jean Dupont" required>
+            </div>
+            <div class="form-group">
+              <label for="contactEmail">EMAIL <span>*</span></label>
+              <input type="email" id="contactEmail" name="email" placeholder="jean@email.com" required>
+            </div>
+            <div class="form-group">
+              <label for="contactPhone">TÉLÉPHONE</label>
+              <input type="tel" id="contactPhone" name="phone" placeholder="+237 6XX XXX XXX">
+            </div>
+            <div class="form-group">
+              <label for="contactService">SERVICE SOUHAITÉ</label>
+              <select id="contactService" name="serviceType">
+                <option value="">Sélectionner…</option>
+                <option>Gros Œuvre</option>
+                <option>Finition & Décoration</option>
+                <option>Rénovation</option>
+                <option>Construction Métallique</option>
+                <option>Génie Civil</option>
+                <option>Nettoyage des Entreprises</option>
+                <option>Pure Water</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label for="contactContent">DESCRIPTION DU PROJET <span>*</span></label>
+              <textarea id="contactContent" name="content" placeholder="Décrivez votre projet : localisation, superficie, délais, budget estimatif…" required></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-submit">
+            <i class="fas fa-paper-plane"></i> ENVOYER MA DEMANDE DE DEVIS
+          </button>
+          <div class="form-note">Réponse garantie sous 24h ouvrables. Devis 100% gratuit et sans engagement.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#hero" class="logo">
+        <img src="images/logo.png" alt="A-KIME Logo">
+          <div class="logo-text-container">
+            <span class="logo-text">A-KIME</span>
+            <span class="logo-subtext">Sarl</span>
+          </div>
+    </a>
+        <p>Votre partenaire de confiance pour tous vos projets de construction, génie civil et services environnementaux depuis 2017.</p>
+        <div class="footer-social">
+          <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">NOS SERVICES</div>
+        <ul class="footer-links">
+          <li><a href="#services">Gros Œuvre</a></li>
+          <li><a href="#services">Finition & Décoration</a></li>
+          <li><a href="#services">Rénovation</a></li>
+          <li><a href="#services">Construction Métallique</a></li>
+          <li><a href="#services">Génie Civil</a></li>
+          <li><a href="#services">Nettoyage des Entreprises</a></li>
+          <li><a href="#services">Pure Water</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">NAVIGATION</div>
+        <ul class="footer-links">
+          <li><a href="#hero">Accueil</a></li>
+          <li><a href="#services">Nos Services</a></li>
+          <li><a href="#portfolio">Réalisations</a></li>
+          <li><a href="#about">À Propos</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">CONTACT</div>
+        <div class="footer-contact-item"><i class="fas fa-phone-alt"></i><span id="footerPhone">+237 698 01 20 93</span></div>
+        <div class="footer-contact-item"><i class="fas fa-envelope"></i><span id="footerEmail">infosakime@gmail.com</span></div>
+        <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span id="footerAddress">Yaoundé, Cameroun</span></div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 A-KIME Construction & Services. Tous droits réservés.</span>
+      <div class="footer-bottom-links">
+        <a href="#">Mentions légales</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

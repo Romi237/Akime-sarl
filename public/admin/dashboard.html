@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-KIME Admin — Tableau de bord</title>
+
+    <!-- ── Auth guard ────────────────────────────────────────────────────── -->
+    <script>
+      (function () {
+        const token = localStorage.getItem('akime_token');
+        if (!token) { window.location.replace('/admin/login'); return; }
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (Date.now() >= payload.exp * 1000) {
+            const rt = localStorage.getItem('akime_refresh_token');
+            if (!rt) { localStorage.clear(); window.location.replace('/admin/login'); return; }
+            fetch('/api/auth/refresh', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken: rt }),
+            }).then(r => r.json()).then(d => {
+              if (d.success && d.data.accessToken) {
+                localStorage.setItem('akime_token', d.data.accessToken);
+                fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + d.data.accessToken } })
+                  .then(r => r.json()).then(me => {
+                    if (!me.success || (me.data.user.role !== 'admin' && me.data.user.role !== 'editor'))
+                      window.location.replace('/login.html');
+                  });
+              } else { localStorage.clear(); window.location.replace('/admin/login'); }
+            }).catch(() => { localStorage.clear(); window.location.replace('/admin/login'); });
+          } else {
+            fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+              .then(r => r.json()).then(d => {
+                if (!d.success || (d.data.user.role !== 'admin' && d.data.user.role !== 'editor'))
+                  window.location.replace('/login.html');
+                else localStorage.setItem('akime_user', JSON.stringify(d.data.user));
+              }).catch(() => {});
+          }
+        } catch(e) { localStorage.clear(); window.location.replace('/admin/login'); }
+      })();
+    </script>
+    <!-- ── End auth guard ────────────────────────────────────────────────── -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+    /* ════════════════════════════════════════════════════════════════
+       A-KIME Admin Panel — CSS v2.0
+       Design system: identical tokens to public index
+       Navy #0a1f44 · Gold #c9a84c · Montserrat
+    ════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --navy:        #0a1f44;
+      --navy-mid:    #142d5e;
+      --navy-light:  #1e3d78;
+      --gold:        #c9a84c;
+      --gold-light:  #dfc06a;
+      --gold-dark:   #a8873a;
+      --gold-soft:   rgba(201,168,76,.12);
+      --white:       #ffffff;
+      --off-white:   #f7f8fc;
+      --gray-light:  #eef1f7;
+      --gray:        #9ba8b5;
+      --gray-dark:   #5a6a7a;
+      --text:        #1a2535;
+      --danger:      #c0392b;
+      --success:     #1a7a4a;
+      --warning:     #c9a84c;
+      --info:        #1a5276;
+      --sidebar-w:   272px;
+      --topbar-h:    64px;
+      --radius:      10px;
+      --radius-sm:   6px;
+      --shadow-sm:   0 2px 8px rgba(0,0,0,.07);
+      --shadow-md:   0 4px 20px rgba(0,0,0,.1);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,.15);
+      --transition:  .25s cubic-bezier(.4,0,.2,1);
+      --font:        'Montserrat', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+    body { font-family: var(--font); background: var(--off-white); color: var(--text); }
+    a    { text-decoration: none; color: inherit; }
+    ul   { list-style: none; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    input, select, textarea { font-family: inherit; }
+    img  { max-width: 100%; display: block; }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(201,168,76,.3); border-radius: 3px; }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .admin-container { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy);
+      color: var(--white);
+      position: fixed; top: 0; left: 0; height: 100vh;
+      overflow-y: auto; overflow-x: hidden;
+      display: flex; flex-direction: column;
+      transition: width var(--transition);
+      z-index: 100;
+      border-right: 1px solid rgba(201,168,76,.1);
+    }
+    .sidebar.collapsed { width: 68px; }
+
+    /* Sidebar header */
+    .sidebar-header {
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .sidebar-logo {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: var(--gold); display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .sidebar-logo img { width: 28px; height: 28px; object-fit: contain; filter: brightness(0) invert(1); }
+    .sidebar-logo-text { font-size: 1.05rem; font-weight: 900; color: var(--white); letter-spacing: .04em; }
+    .sidebar-logo-sub  { font-size: .62rem; color: var(--gold); font-weight: 700; letter-spacing: .1em; }
+    .sidebar.collapsed .sidebar-logo-text,
+    .sidebar.collapsed .sidebar-logo-sub  { display: none; }
+
+    /* Nav shortcuts */
+    .sidebar-shortcuts {
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .sidebar.collapsed .sidebar-shortcuts { display: none; }
+    .shortcut-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+      transition: var(--transition);
+    }
+    .shortcut-btn.gold  { background: var(--gold-soft); border: 1px solid rgba(201,168,76,.3); color: var(--gold); }
+    .shortcut-btn.ghost { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.65); }
+    .shortcut-btn:hover { opacity: .85; }
+
+    /* Nav menu */
+    .nav-menu { padding: 8px 0; flex: 1; }
+    .nav-section-label {
+      padding: 14px 18px 4px;
+      font-size: .62rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: rgba(255,255,255,.28);
+    }
+    .sidebar.collapsed .nav-section-label { display: none; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 13px;
+      padding: 11px 18px; color: rgba(255,255,255,.6);
+      transition: var(--transition); position: relative;
+      font-size: .82rem; font-weight: 600; cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: var(--white); }
+    .nav-item.active {
+      background: rgba(201,168,76,.1); color: var(--white);
+      border-left-color: var(--gold);
+    }
+    .nav-item i { width: 18px; text-align: center; font-size: .9rem; flex-shrink: 0; }
+    .nav-item span { white-space: nowrap; overflow: hidden; }
+    .sidebar.collapsed .nav-item span { display: none; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 13px; border-left: none; border-bottom: 2px solid transparent; }
+    .sidebar.collapsed .nav-item.active { border-bottom-color: var(--gold); border-left: none; }
+
+    /* Badge on nav item */
+    .nav-badge {
+      margin-left: auto; background: var(--gold); color: var(--navy);
+      border-radius: 10px; font-size: .65rem; font-weight: 800;
+      padding: 2px 7px; flex-shrink: 0; display: none;
+    }
+    .sidebar.collapsed .nav-badge { display: none !important; }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .sidebar.collapsed .sidebar-footer { justify-content: center; }
+    .sidebar-user-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--gold); display: flex; align-items: center;
+      justify-content: center; font-size: .8rem; font-weight: 800;
+      color: var(--navy); flex-shrink: 0;
+    }
+    .sidebar-user-name  { font-size: .8rem; font-weight: 700; color: var(--white); }
+    .sidebar-user-role  { font-size: .65rem; color: var(--gold); font-weight: 600; }
+    .sidebar.collapsed .sidebar-user-name,
+    .sidebar.collapsed .sidebar-user-role { display: none; }
+    .sidebar-logout {
+      margin-left: auto; width: 30px; height: 30px; border-radius: 7px;
+      background: rgba(192,57,43,.15); color: #e74c3c;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; transition: var(--transition); flex-shrink: 0;
+    }
+    .sidebar-logout:hover { background: rgba(192,57,43,.3); }
+    .sidebar.collapsed .sidebar-logout { margin-left: 0; }
+
+    /* ── Main content ─────────────────────────────────────────── */
+    .main-content {
+      flex: 1; margin-left: var(--sidebar-w);
+      transition: margin-left var(--transition);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .main-content.expanded { margin-left: 68px; }
+
+    /* ── Top bar ──────────────────────────────────────────────── */
+    .top-bar {
+      height: var(--topbar-h); background: var(--white);
+      border-bottom: 1px solid var(--gray-light);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 28px; position: sticky; top: 0; z-index: 90;
+      box-shadow: var(--shadow-sm);
+    }
+    .toggle-btn {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: var(--off-white); color: var(--gray-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; transition: var(--transition);
+    }
+    .toggle-btn:hover { background: var(--gray-light); color: var(--navy); }
+
+    .top-bar-breadcrumb {
+      font-size: .78rem; color: var(--gray); display: flex; align-items: center; gap: 6px;
+    }
+    .top-bar-breadcrumb strong { color: var(--navy); font-weight: 700; }
+    .top-bar-breadcrumb i { font-size: .65rem; }
+
+    .top-bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    .top-bar-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: .75rem; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; transition: var(--transition);
+    }
+    .top-bar-btn.preview { background: var(--navy); color: var(--white); }
+    .top-bar-btn.preview:hover { background: var(--navy-light); }
+    .top-bar-btn.logout  { background: rgba(192,57,43,.1); color: var(--danger); }
+    .top-bar-btn.logout:hover  { background: rgba(192,57,43,.2); }
+
+    .top-bar-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--navy); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .82rem; font-weight: 800; border: 2px solid var(--gold);
+    }
+    .top-bar-user-name { font-size: .82rem; font-weight: 700; color: var(--navy); }
+
+    /* ── Content area ─────────────────────────────────────────── */
+    .content-area { flex: 1; padding: 28px 32px; }
+
+    .page-title {
+      font-size: 1.5rem; font-weight: 800; color: var(--navy);
+      margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+    }
+    .page-title i { color: var(--gold); font-size: 1.2rem; }
+
+    /* ── Section ──────────────────────────────────────────────── */
+    .content-section { display: none; animation: fadeUp .25s ease both; }
+    .content-section.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Stat cards ───────────────────────────────────────────── */
+    .dashboard-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px; margin-bottom: 28px;
+    }
+    .dashboard-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 22px 24px; box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-light); transition: var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .dashboard-card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%; background: var(--gold);
+    }
+    .dashboard-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+    .card-header  { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .card-title   { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-dark); }
+    .card-icon    {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--navy); background: var(--gold-soft);
+    }
+    .card-value   { font-size: 2rem; font-weight: 900; color: var(--navy); margin-bottom: 6px; }
+    .card-change  { font-size: .75rem; color: var(--gray-dark); font-weight: 600; }
+    .card-change.positive { color: var(--success); }
+    .card-change.negative { color: var(--danger); }
+
+    /* ── Data table wrapper ───────────────────────────────────── */
+    .data-table {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--gray-light);
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      background: var(--off-white);
+    }
+    .table-header h3 { font-size: .9rem; font-weight: 800; color: var(--navy); }
+    .table-content { padding: 8px 0; }
+
+    table { width: 100%; border-collapse: collapse; }
+    table th {
+      padding: 11px 16px; font-size: .72rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--gray-dark); background: var(--off-white);
+      border-bottom: 1px solid var(--gray-light); text-align: left;
+    }
+    table td {
+      padding: 12px 16px; font-size: .82rem; color: var(--text);
+      border-bottom: 1px solid var(--gray-light);
+    }
+    table tr:last-child td { border-bottom: none; }
+    table tr:hover td { background: rgba(201,168,76,.04); }
+
+    /* ── Badges ───────────────────────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+    }
+    .badge.approved { background: rgba(26,122,74,.1); color: var(--success); }
+    .badge.pending  { background: rgba(201,168,76,.15); color: var(--gold-dark); }
+    .badge.danger   { background: rgba(192,57,43,.1); color: var(--danger); }
+    .badge.info     { background: rgba(26,82,118,.1); color: var(--info); }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: var(--radius-sm);
+      font-size: .78rem; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; transition: var(--transition);
+      cursor: pointer; border: none;
+    }
+    .btn-primary   { background: var(--navy); color: var(--white); }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-gold      { background: var(--gold); color: var(--navy); }
+    .btn-gold:hover { background: var(--gold-light); }
+    .btn-danger    { background: rgba(192,57,43,.1); color: var(--danger); border: 1px solid rgba(192,57,43,.2); }
+    .btn-danger:hover { background: rgba(192,57,43,.2); }
+    .btn-success   { background: rgba(26,122,74,.1); color: var(--success); border: 1px solid rgba(26,122,74,.2); }
+    .btn-success:hover { background: rgba(26,122,74,.2); }
+    .btn-sm { padding: 6px 12px; font-size: .7rem; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--gray-light); color: var(--gray-dark); }
+    .btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+
+    /* ── Section header ───────────────────────────────────────── */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+
+    /* ── Forms ────────────────────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-group label { font-size: .75rem; font-weight: 700; color: var(--navy); letter-spacing: .04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 10px 14px; border: 1.5px solid var(--gray-light);
+      border-radius: var(--radius-sm); font-family: var(--font);
+      font-size: .85rem; color: var(--text); transition: var(--transition);
+      background: var(--white); outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 90px; }
+
+    /* ── Modal overlay ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(10,31,68,.55);
+      backdrop-filter: blur(4px); z-index: 500;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--white); border-radius: var(--radius);
+      padding: 28px 32px; width: 90%; max-width: 560px;
+      box-shadow: var(--shadow-lg); position: relative;
+    }
+    .modal-title {
+      font-size: 1.1rem; font-weight: 800; color: var(--navy);
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-light);
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 30px; height: 30px; border-radius: 6px;
+      background: var(--gray-light); color: var(--gray-dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; transition: var(--transition);
+    }
+    .modal-close:hover { background: rgba(192,57,43,.1); color: var(--danger); }
+
+    /* ── Loading ──────────────────────────────────────────────── */
+    .loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 48px; gap: 14px;
+      color: var(--gray); font-size: .85rem; font-weight: 600;
+    }
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid var(--gray-light);
+      border-top-color: var(--gold);
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Alert / toast ────────────────────────────────────────── */
+    .alert-toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      background: var(--white); border-radius: var(--radius);
+      padding: 14px 20px; box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--gold);
+      display: flex; align-items: center; gap: 10px;
+      font-size: .85rem; font-weight: 600; color: var(--navy);
+      transform: translateY(80px); opacity: 0; transition: .3s ease;
+      max-width: 380px;
+    }
+    .alert-toast.show { transform: translateY(0); opacity: 1; }
+    .alert-toast.success { border-color: var(--success); }
+    .alert-toast.error   { border-color: var(--danger); }
+    .alert-toast i { font-size: 1rem; }
+    .alert-toast.success i { color: var(--success); }
+    .alert-toast.error   i { color: var(--danger); }
+
+    /* ── Message card ─────────────────────────────────────────── */
+    .message-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--gray-light); padding: 18px 20px;
+      margin-bottom: 12px; transition: var(--transition);
+      border-left: 4px solid var(--gray-light);
+    }
+    .message-card.unread { border-left-color: var(--gold); background: rgba(201,168,76,.03); }
+    .message-card:hover  { box-shadow: var(--shadow-sm); }
+    .message-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Upload area ──────────────────────────────────────────── */
+    .upload-area {
+      border: 2px dashed var(--gray-light); border-radius: var(--radius);
+      padding: 28px; text-align: center; cursor: pointer;
+      transition: var(--transition); color: var(--gray);
+    }
+    .upload-area:hover  { border-color: var(--gold); color: var(--gold); }
+    .upload-area.active { border-color: var(--gold); background: var(--gold-soft); }
+    .upload-area i { font-size: 2rem; margin-bottom: 8px; }
+
+    /* ── Card panels for settings etc ────────────────────────── */
+    .panel-card {
+      background: var(--white); border-radius: var(--radius);
+      border: 1px solid var(--gray-light); padding: 24px;
+      box-shadow: var(--shadow-sm); margin-bottom: 20px;
+    }
+    .panel-card-title {
+      font-size: .9rem; font-weight: 800; color: var(--navy);
+      margin-bottom: 18px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-light);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-card-title i { color: var(--gold); }
+
+    /* ── File manager thumbnails ──────────────────────────────── */
+    .file-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .file-thumb {
+      border-radius: var(--radius-sm); overflow: hidden;
+      border: 1px solid var(--gray-light); background: var(--off-white);
+      transition: var(--transition); cursor: pointer;
+    }
+    .file-thumb:hover { border-color: var(--gold); box-shadow: var(--shadow-sm); }
+    .file-thumb img   { width: 100%; height: 90px; object-fit: cover; }
+    .file-thumb-name  { padding: 6px 8px; font-size: .7rem; color: var(--gray-dark); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Audit log entries ────────────────────────────────────── */
+    .audit-entry {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 12px 0; border-bottom: 1px solid var(--gray-light);
+    }
+    .audit-entry:last-child { border-bottom: none; }
+    .audit-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: var(--gold-soft); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; flex-shrink: 0;
+    }
+    .audit-body { flex: 1; }
+    .audit-action { font-size: .82rem; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+    .audit-meta   { font-size: .72rem; color: var(--gray); }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { width: 68px; }
+      .sidebar .sidebar-logo-text,
+      .sidebar .sidebar-logo-sub,
+      .sidebar .sidebar-shortcuts,
+      .sidebar .nav-section-label,
+      .sidebar .nav-item span,
+      .sidebar .nav-badge,
+      .sidebar .sidebar-user-name,
+      .sidebar .sidebar-user-role { display: none; }
+      .sidebar .nav-item { justify-content: center; padding: 13px; }
+      .sidebar .sidebar-footer { justify-content: center; }
+      .sidebar .sidebar-logout  { margin-left: 0; }
+      .main-content { margin-left: 68px; }
+      .content-area { padding: 20px 16px; }
+    }
+    @media (max-width: 600px) {
+      .top-bar-btn.preview span { display: none; }
+      .top-bar-user-name { display: none; }
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="/images/logo.png" alt="A-KIME" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:.9rem;font-weight:900;color:#0a1f44;\'>A</span>'">
+            </div>
+            <div>
+                <div class="sidebar-logo-text">A-KIME</div>
+                <div class="sidebar-logo-sub">ADMIN PANEL</div>
+            </div>
+        </div>
+
+        <div class="sidebar-shortcuts">
+            <a href="/welcome.html" class="shortcut-btn gold"><i class="fas fa-th-large"></i> Mon espace</a>
+            <a href="/"            class="shortcut-btn ghost"><i class="fas fa-globe"></i> Site</a>
+        </div>
+
+        <div class="nav-menu">
+            <div class="nav-section-label">Principal</div>
+            <a href="#dashboard"    class="nav-item active" data-section="dashboard">
+                <i class="fas fa-chart-line"></i><span>Tableau de bord</span>
+            </a>
+
+            <div class="nav-section-label">Contenu</div>
+            <a href="#equipment"    class="nav-item" data-section="equipment">
+                <i class="fas fa-cogs"></i><span>Équipements</span>
+            </a>
+            <a href="#projects"     class="nav-item" data-section="projects">
+                <i class="fas fa-hard-hat"></i><span>Projets</span>
+            </a>
+            <a href="#company"      class="nav-item" data-section="company">
+                <i class="fas fa-building"></i><span>Entreprise</span>
+            </a>
+
+            <div class="nav-section-label">Communication</div>
+            <a href="#messages"     class="nav-item" data-section="messages">
+                <i class="fas fa-envelope"></i><span>Messages</span>
+                <span class="nav-badge" id="unreadBadge">0</span>
+            </a>
+            <a href="#testimonials" class="nav-item" data-section="testimonials">
+                <i class="fas fa-star"></i><span>Témoignages</span>
+                <span class="nav-badge" id="testimonialBadge">0</span>
+            </a>
+
+            <div class="nav-section-label">Système</div>
+            <a href="#users"        class="nav-item" data-section="users">
+                <i class="fas fa-users"></i><span>Utilisateurs</span>
+            </a>
+            <a href="#file-manager" class="nav-item" data-section="file-manager">
+                <i class="fas fa-folder-open"></i><span>Fichiers</span>
+            </a>
+            <a href="#backup-restore" class="nav-item" data-section="backup-restore">
+                <i class="fas fa-database"></i><span>Sauvegarde</span>
+            </a>
+            <a href="#audit-logs"   class="nav-item" data-section="audit-logs">
+                <i class="fas fa-history"></i><span>Journal d'audit</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
+            <div>
+                <div class="sidebar-user-name" id="sidebarUserName">Administrateur</div>
+                <div class="sidebar-user-role" id="sidebarUserRole">Admin</div>
+            </div>
+            <button class="sidebar-logout" id="logoutBtn" title="Déconnexion">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ── Main ─────────────────────────────────────────────────────── -->
+    <main class="main-content" id="mainContent">
+
+        <!-- Top bar -->
+        <div class="top-bar">
+            <button class="toggle-btn" id="toggleBtn" title="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="top-bar-breadcrumb">
+                A-KIME <i class="fas fa-chevron-right"></i>
+                <strong id="topBarSection">Tableau de bord</strong>
+            </div>
+            <div class="top-bar-right">
+                <a href="/" class="top-bar-btn preview">
+                    <i class="fas fa-eye"></i><span>Aperçu site</span>
+                </a>
+                <div class="top-bar-avatar" id="userAvatar">A</div>
+                <span class="top-bar-user-name" id="userName">Admin</span>
+                <button class="top-bar-btn logout" id="topLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i><span>Déconnexion</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content-area">
+
+            <!-- Dashboard -->
+            <section id="dashboard" class="content-section active">
+                <div class="page-title"><i class="fas fa-chart-line"></i> Tableau de bord</div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Équipements</div>
+                            <div class="card-icon"><i class="fas fa-cogs"></i></div>
+                        </div>
+                        <div class="card-value" id="equipmentCount">—</div>
+                        <div class="card-change">Équipements enregistrés</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Projets</div>
+                            <div class="card-icon"><i class="fas fa-hard-hat"></i></div>
+                        </div>
+                        <div class="card-value" id="projectsCount">—</div>
+                        <div class="card-change">Projets réalisés</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Témoignages</div>
+                            <div class="card-icon"><i class="fas fa-star"></i></div>
+                        </div>
+                        <div class="card-value" id="testimonialsCount">—</div>
+                        <div class="card-change">Témoignages reçus</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Messages</div>
+                            <div class="card-icon"><i class="fas fa-envelope"></i></div>
+                        </div>
+                        <div class="card-value" id="messagesCount">—</div>
+                        <div class="card-change">Messages de contact</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Equipment -->
+            <section id="equipment" class="content-section">
+                <div class="page-title"><i class="fas fa-cogs"></i> Équipements</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Projects -->
+            <section id="projects" class="content-section">
+                <div class="page-title"><i class="fas fa-hard-hat"></i> Projets</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Messages -->
+            <section id="messages" class="content-section">
+                <div class="page-title"><i class="fas fa-envelope"></i> Messages de Contact</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Testimonials -->
+            <section id="testimonials" class="content-section">
+                <div class="page-title"><i class="fas fa-star"></i> Témoignages</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Users -->
+            <section id="users" class="content-section">
+                <div class="page-title"><i class="fas fa-users"></i> Utilisateurs</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Backup/Restore -->
+            <section id="backup-restore" class="content-section">
+                <div class="page-title"><i class="fas fa-database"></i> Sauvegarde / Restauration</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- File Manager -->
+            <section id="file-manager" class="content-section">
+                <div class="page-title"><i class="fas fa-folder-open"></i> Gestionnaire de Fichiers</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Audit Logs -->
+            <section id="audit-logs" class="content-section">
+                <div class="page-title"><i class="fas fa-history"></i> Journal d'Audit</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+            <!-- Company -->
+            <section id="company" class="content-section">
+                <div class="page-title"><i class="fas fa-building"></i> Informations Entreprise</div>
+                <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
+            </section>
+
+        </div><!-- /content-area -->
+    </main>
+</div>
+
+<!-- Alert toast -->
+<div class="alert-toast" id="alertToast">
+    <i class="fas fa-check-circle"></i>
+    <span id="alertToastMsg">Message</span>
+</div>
+
+<!-- Sidebar toggle + breadcrumb sync (lightweight, admin.js handles the rest) -->
+<script>
+  // Sidebar toggle
+  document.getElementById('toggleBtn').addEventListener('click', () => {
+    const sb = document.getElementById('sidebar');
+    const mc = document.getElementById('mainContent');
+    sb.classList.toggle('collapsed');
+    mc.classList.toggle('expanded');
+  });
+
+  // Nav item click → section switch + breadcrumb
+  const sectionTitles = {
+    dashboard: 'Tableau de bord', equipment: 'Équipements',
+    projects: 'Projets', messages: 'Messages',
+    testimonials: 'Témoignages', users: 'Utilisateurs',
+    'backup-restore': 'Sauvegarde', 'file-manager': 'Fichiers',
+    'audit-logs': "Journal d'audit", company: 'Entreprise',
+  };
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      const sec = item.dataset.section;
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(sec);
+      if (target) target.classList.add('active');
+      document.getElementById('topBarSection').textContent = sectionTitles[sec] || sec;
+    });
+  });
+
+  // Populate user info from localStorage (admin.js will override with fresh API data)
+  try {
+    const u = JSON.parse(localStorage.getItem('akime_user') || '{}');
+    if (u.name) {
+      const initials = u.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      ['userAvatar','sidebarAvatar'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = initials;
+      });
+      const un = document.getElementById('userName');
+      if (un) un.textContent = u.name.split(' ')[0];
+      const sn = document.getElementById('sidebarUserName');
+      if (sn) sn.textContent = u.name;
+      const sr = document.getElementById('sidebarUserRole');
+      if (sr) sr.textContent = u.role === 'admin' ? 'Administrateur' : 'Éditeur';
+    }
+  } catch(e) {}
+
+  // Logout (both buttons)
+  async function doLogout() {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json',
+                   'Authorization': 'Bearer ' + localStorage.getItem('akime_token') },
+        body: JSON.stringify({ refreshToken: localStorage.getItem('akime_refresh_token') })
+      });
+    } catch(e) {}
+    localStorage.removeItem('akime_token');
+    localStorage.removeItem('akime_refresh_token');
+    localStorage.removeItem('akime_user');
+    window.location.replace('/admin/login');
+  }
+  document.getElementById('logoutBtn').addEventListener('click', doLogout);
+  document.getElementById('topLogoutBtn').addEventListener('click', doLogout);
+</script>
+
+<script src="/js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

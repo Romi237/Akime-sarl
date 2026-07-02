@@ -1,0 +1,40 @@
+{
+  "name": "akime-website",
+  "version": "6.2.0",
+  "description": "A-KIME Sarl website with content management system",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "create-admin": "node scripts/create-admin.js",
+    "test-mongodb": "node scripts/test-mongodb.js",
+    "test-db": "node scripts/simple-mongodb-test.js",
+    "test": "echo \"No tests specified\"",
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js",
+    "seed": "node scripts/seed.js",
+    "fix-admin-roles": "node scripts/fix-admin-roles.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.3.0",
+    "google-auth-library": "^10.9.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.21.0",
+    "mongoose": "^8.17.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.14",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

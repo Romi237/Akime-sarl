@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A-KIME Admin — Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-login-wrap">
+  <div class="admin-login-card">
+    <div class="admin-login-logo">
+      <div class="logo-icon" style="margin:0 auto 12px;width:52px;height:52px;font-size:1.1rem;">A</div>
+      <div style="font-size:1.4rem;font-weight:900;color:var(--navy);">A-KIME</div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.12em;color:var(--gold);margin-bottom:4px;">SARL</div>
+    </div>
+    <div class="admin-login-title">Espace Administration</div>
+    <div class="admin-login-sub">Connectez-vous pour gérer votre site</div>
+
+    <div class="admin-login-error" id="loginError"></div>
+
+    <form id="loginForm">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>EMAIL</label>
+        <input type="email" id="loginEmail" placeholder="admin@akime.cm" required autocomplete="email">
+      </div>
+      <div class="form-group" style="margin-bottom:24px;">
+        <label>MOT DE PASSE</label>
+        <div style="position:relative;">
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="width:100%;padding-right:44px;">
+          <button type="button" id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-dark);font-size:.85rem;" tabindex="-1">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:15px;" id="loginBtn">
+        <i class="fas fa-sign-in-alt"></i> SE CONNECTER
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:20px;">
+      <a href="/" style="font-size:.82rem;color:var(--gray-dark);text-decoration:underline;">← Retour au site</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem('akime_token')) {
+    window.location.replace('dashboard.html');
+  }
+
+  document.getElementById('togglePwd').addEventListener('click', () => {
+    const pwd  = document.getElementById('loginPassword');
+    const icon = document.getElementById('eyeIcon');
+    pwd.type   = pwd.type === 'password' ? 'text' : 'password';
+    icon.className = pwd.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn   = document.getElementById('loginBtn');
+    const error = document.getElementById('loginError');
+    error.style.display = 'none';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion…';
+    btn.disabled  = true;
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email:    document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value,
+        })
+      });
+      const data = await res.json();
+
+      if (data.success && data.data?.accessToken) {
+        localStorage.setItem('akime_token',         data.data.accessToken);
+        localStorage.setItem('akime_refresh_token', data.data.refreshToken || '');
+        localStorage.setItem('akime_user',          JSON.stringify(data.data.user || {}));
+        window.location.replace('dashboard.html');
+      } else {
+        throw new Error(data.message || 'Identifiants incorrects');
+      }
+    } catch (err) {
+      error.textContent    = err.message;
+      error.style.display  = 'block';
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> SE CONNECTER';
+      btn.disabled  = false;
+    }
+  });
+</script>
+</body>
+</html>
