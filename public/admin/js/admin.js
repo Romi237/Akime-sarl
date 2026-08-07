@@ -159,19 +159,20 @@ class AdminDashboard {
 
     async loadDashboardData() {
         try {
-            // Load counts for dashboard cards
-            const [equipment, projects, messages, testimonials] = await Promise.all([
+            const [equipment, projects, messages, testimonials, services] = await Promise.all([
                 this.apiCall('/api/content/equipment'),
                 this.apiCall('/api/content/projects'),
                 this.apiCall('/api/contact'),
-                this.apiCall('/api/testimonials/admin/all')
+                this.apiCall('/api/testimonials/admin/all'),
+                this.apiCall('/api/content/services'),
             ]);
 
-            // Update dashboard cards
-            document.getElementById('equipmentCount').textContent = equipment?.length || 0;
-            document.getElementById('projectsCount').textContent = projects?.length || 0;
-            document.getElementById('messagesCount').textContent = messages?.length || 0;
+            document.getElementById('equipmentCount').textContent    = equipment?.length    || 0;
+            document.getElementById('projectsCount').textContent     = projects?.length     || 0;
+            document.getElementById('messagesCount').textContent     = messages?.length     || 0;
             document.getElementById('testimonialsCount').textContent = testimonials?.length || 0;
+            const sc = document.getElementById('servicesCount');
+            if (sc) sc.textContent = services?.length || 0;
 
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -659,53 +660,71 @@ class AdminDashboard {
     async loadServicesSection() {
     try {
         const services = await this.apiCall('/api/content/services');
-        const sectionElement = document.getElementById('services');
+        const el = document.getElementById('services');
 
-        if (!services || services.length === 0) {
-            sectionElement.innerHTML = `
-                <div class="section-header">
-                    <h1 class="page-title">Gestion des Services</h1>
-                    <button class="btn btn-primary" id="addServiceBtn">
-                        <i class="fas fa-plus"></i> Ajouter un service
-                    </button>
-                </div>
-                <p style="padding: 20px; text-align: center; color: #666;">
-                    Aucun service trouvé. Cliquez sur <strong>Ajouter un service</strong> pour commencer.
-                </p>
-            `;
-        } else {
-            sectionElement.innerHTML = `
-                <div class="section-header">
-                    <h1 class="page-title">Gestion des Services</h1>
-                    <button class="btn btn-primary" id="addServiceBtn">
-                        <i class="fas fa-plus"></i> Ajouter un service
-                    </button>
-                </div>
-                <div class="data-table">
-                    <div class="table-header">
-                        <h3>Services (${services.length})</h3>
-                    </div>
-                    <div class="table-content">
-                        ${this.renderServicesTable(services)}
-                    </div>
-                </div>
-            `;
-        }
+        // Update dashboard stat
+        const sc = document.getElementById('servicesCount');
+        if (sc) sc.textContent = services ? services.length : 0;
 
-        // Bouton "Ajouter un service"
-        document.getElementById('addServiceBtn')?.addEventListener('click', () => this.addService());
+        el.innerHTML = `
+            <div class="section-header">
+                <div class="page-title"><i class="fas fa-concierge-bell"></i> Gestion des Services</div>
+                <button class="btn btn-gold" id="addServiceBtn">
+                    <i class="fas fa-plus"></i> Ajouter un service
+                </button>
+            </div>
 
-        // Attacher les listeners edit / delete
+            ${!services || services.length === 0 ? `
+                <div class="panel-card" style="text-align:center; padding:48px;">
+                    <i class="fas fa-concierge-bell" style="font-size:3rem;color:var(--gray);margin-bottom:16px;display:block;"></i>
+                    <p style="color:var(--gray-dark);font-size:.9rem;">Aucun service. Cliquez sur <strong>Ajouter un service</strong> pour commencer.</p>
+                </div>
+            ` : `
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+                    ${services.map(s => `
+                        <div class="panel-card" style="padding:0;overflow:hidden;cursor:pointer;" data-id="${s._id}">
+                            <!-- Image -->
+                            <div style="height:160px;background:linear-gradient(135deg,var(--navy),var(--navy-light));overflow:hidden;position:relative;">
+                                ${s.imageUrl
+                                    ? `<img src="${s.imageUrl}" alt="${s.name || s.title}" style="width:100%;height:100%;object-fit:cover;">`
+                                    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);font-size:2.5rem;"><i class="fas fa-concierge-bell"></i></div>`
+                                }
+                                <!-- Sub-page tags -->
+                                ${s.subPages && s.subPages.length > 0 ? `
+                                    <div style="position:absolute;bottom:10px;left:10px;display:flex;flex-wrap:wrap;gap:4px;">
+                                        ${s.subPages.map(sp => `
+                                            <span style="background:var(--gold);color:var(--navy);font-size:.6rem;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:3px;text-transform:uppercase;">${sp.title}</span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <!-- Body -->
+                            <div style="padding:18px 20px;">
+                                <div style="font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:6px;">${s.name || s.title || '—'}</div>
+                                <div style="font-size:.8rem;color:var(--gray-dark);line-height:1.6;margin-bottom:14px;">${(s.description||'').substring(0,100)}${s.description&&s.description.length>100?'…':''}</div>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-sm btn-primary edit-service-btn" data-id="${s._id}">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-service-btn" data-id="${s._id}">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}
+        `;
+
+        document.getElementById('addServiceBtn')?.addEventListener('click', () => this.showServiceForm());
         this.attachServiceEventListeners();
 
     } catch (err) {
-        console.error("Erreur lors du chargement des services:", err);
-        const sectionElement = document.getElementById('services');
-        sectionElement.innerHTML = `
-            <h1 class="page-title">Gestion des Services</h1>
-            <p style="padding: 20px; text-align: center; color: red;">
-                Impossible de charger les services pour le moment.
-            </p>
+        console.error('loadServicesSection error:', err);
+        document.getElementById('services').innerHTML = `
+            <div class="page-title"><i class="fas fa-concierge-bell"></i> Services</div>
+            <p style="color:var(--danger);padding:20px;">Impossible de charger les services : ${err.message}</p>
         `;
     }
 }
@@ -1420,20 +1439,18 @@ renderTestimonialsTable(testimonials) {
     // Event listener attachment methods
     attachServiceEventListeners() {
         document.querySelectorAll('.edit-service-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.closest('button').dataset.id;
-                this.editService(id);
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                this.showServiceForm(btn.dataset.id);
             });
         });
-
         document.querySelectorAll('.delete-service-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.closest('button').dataset.id;
-                this.deleteService(id);
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                this.deleteService(btn.dataset.id);
             });
         });
     }
-
     attachEquipmentEventListeners() {
         document.querySelectorAll('.edit-equipment-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1692,67 +1709,355 @@ async approveTestimonial(id) {
 
 
     // Services CRUD operations
-    addService() {
-        const modal = this.createModal('Ajouter un service', this.getServiceForm());
-        document.body.appendChild(modal);
-
-        setTimeout(() => {
-            const saveBtn = modal.querySelector('#saveServiceBtn');
-            const closeBtn = modal.querySelector('.modal-close');
-            const overlay = modal.querySelector('.modal-overlay');
-
-            if (saveBtn) {
-                saveBtn.addEventListener('click', () => this.saveService(modal));
+    // ══ showServiceForm — add (no id) or edit (with id) ══════════════
+    async showServiceForm(serviceId = null) {
+        let service = {};
+        if (serviceId) {
+            try {
+                const res = await this.apiCall(`/api/content/services/${serviceId}`);
+                service = res || {};
+            } catch (e) {
+                // fallback: get from list
+                const all = await this.apiCall('/api/content/services');
+                service = (all || []).find(s => s._id === serviceId) || {};
             }
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => this.closeModal(modal));
-            }
-            if (overlay) {
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) {
-                        this.closeModal(modal);
-                    }
+        }
+
+        // Build the full-page form overlay (not a small modal)
+        const overlay = document.createElement('div');
+        overlay.id = 'serviceFormOverlay';
+        overlay.style.cssText = `
+            position:fixed;inset:0;background:var(--off-white);z-index:600;
+            overflow-y:auto;padding:0;
+        `;
+
+        const subPagesJson = JSON.stringify(service.subPages || []);
+
+        overlay.innerHTML = `
+        <div style="background:var(--white);border-bottom:1px solid var(--gray-light);
+                    padding:16px 32px;display:flex;align-items:center;gap:16px;
+                    position:sticky;top:0;z-index:10;box-shadow:var(--shadow-sm);">
+            <button id="svcBackBtn" style="display:inline-flex;align-items:center;gap:8px;
+                    padding:8px 16px;border-radius:var(--radius-sm);background:var(--off-white);
+                    border:1.5px solid var(--gray-light);color:var(--navy);font-size:.8rem;
+                    font-weight:700;cursor:pointer;font-family:var(--font);">
+                <i class="fas fa-arrow-left"></i> Retour aux services
+            </button>
+            <span style="font-size:1rem;font-weight:800;color:var(--navy);">
+                ${serviceId ? 'Modifier le service' : 'Nouveau service'}
+            </span>
+            <button id="svcSaveBtn" style="margin-left:auto;display:inline-flex;align-items:center;
+                    gap:8px;padding:10px 24px;border-radius:var(--radius-sm);
+                    background:var(--gold);color:var(--navy);font-size:.8rem;font-weight:800;
+                    cursor:pointer;border:none;font-family:var(--font);">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+        </div>
+
+        <div style="max-width:900px;margin:0 auto;padding:32px 24px;display:grid;
+                    grid-template-columns:1fr 1fr;gap:24px;">
+
+            <!-- Left column: main info -->
+            <div>
+                <div class="panel-card">
+                    <div class="panel-card-title"><i class="fas fa-info-circle"></i> Informations principales</div>
+
+                    <div class="form-group">
+                        <label>NOM DU SERVICE <span style="color:var(--gold)">*</span></label>
+                        <input id="svcName" type="text" value="${service.name || service.title || ''}"
+                               placeholder="ex: Gros Œuvre">
+                    </div>
+                    <div class="form-group">
+                        <label>CATÉGORIE (slug) <span style="color:var(--gold)">*</span></label>
+                        <input id="svcCategory" type="text" value="${service.category || ''}"
+                               placeholder="ex: gros-oeuvre">
+                        <span style="font-size:.7rem;color:var(--gray);">Utilisé comme identifiant. Sans espaces, en minuscules.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>DESCRIPTION <span style="color:var(--gold)">*</span></label>
+                        <textarea id="svcDesc" rows="4"
+                                  placeholder="Description affichée sur le site public…">${service.description || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>ICÔNE FONT-AWESOME</label>
+                        <input id="svcIcon" type="text" value="${service.icon || 'fa-cogs'}"
+                               placeholder="ex: fa-building">
+                        <span style="font-size:.7rem;color:var(--gray);">Classe Font Awesome sans "fas" (ex: fa-hard-hat)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column: image + sub-pages -->
+            <div style="display:flex;flex-direction:column;gap:24px;">
+
+                <!-- Image upload -->
+                <div class="panel-card">
+                    <div class="panel-card-title"><i class="fas fa-image"></i> Image du service</div>
+                    <div id="svcImgPreview" style="width:100%;height:160px;border-radius:8px;
+                         overflow:hidden;background:var(--off-white);border:2px dashed var(--gray-light);
+                         display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+                         color:var(--gray);font-size:.85rem;position:relative;">
+                        ${service.imageUrl
+                            ? `<img src="${service.imageUrl}" style="width:100%;height:100%;object-fit:cover;">`
+                            : `<div style="text-align:center;"><i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:8px;"></i>Aucune image</div>`
+                        }
+                    </div>
+                    <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
+                           background:var(--navy);color:var(--white);border-radius:var(--radius-sm);
+                           font-size:.75rem;font-weight:700;cursor:pointer;letter-spacing:.04em;">
+                        <i class="fas fa-upload"></i> CHOISIR UNE IMAGE
+                        <input type="file" id="svcImageFile" accept="image/*" style="display:none;">
+                    </label>
+                    <span id="svcImageName" style="font-size:.75rem;color:var(--gray);margin-left:8px;"></span>
+                </div>
+
+                <!-- Sub-pages builder -->
+                <div class="panel-card">
+                    <div class="panel-card-title"><i class="fas fa-layer-group"></i> Sous-pages
+                        <button id="addSubPageBtn" style="margin-left:auto;padding:5px 12px;
+                                background:var(--gold-soft);border:1px solid var(--gold);
+                                color:var(--gold-dark);border-radius:var(--radius-sm);
+                                font-size:.7rem;font-weight:700;cursor:pointer;font-family:var(--font);">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </button>
+                    </div>
+                    <p style="font-size:.75rem;color:var(--gray);margin-bottom:12px;">
+                        Ex: FONDATIONS, BÉTON ARMÉ, MAÇONNERIE — apparaissent comme tags cliquables sous l'image.
+                    </p>
+                    <div id="subPagesList" style="display:flex;flex-direction:column;gap:10px;">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-width: preview of how it looks on public site -->
+            <div style="grid-column:1/-1;">
+                <div class="panel-card">
+                    <div class="panel-card-title"><i class="fas fa-eye"></i> Aperçu public</div>
+                    <div style="display:grid;grid-template-columns:200px 1fr;border-radius:10px;
+                                overflow:hidden;border:1px solid var(--gray-light);">
+                        <!-- Image preview side -->
+                        <div id="previewImg" style="background:var(--navy);min-height:180px;
+                             display:flex;align-items:center;justify-content:center;
+                             color:rgba(255,255,255,.3);position:relative;overflow:hidden;">
+                            ${service.imageUrl
+                                ? `<img src="${service.imageUrl}" style="width:100%;height:100%;object-fit:cover;">`
+                                : `<i class="fas fa-concierge-bell" style="font-size:2rem;"></i>`
+                            }
+                            <div id="previewTags" style="position:absolute;bottom:10px;left:10px;
+                                 display:flex;flex-wrap:wrap;gap:4px;">
+                                ${(service.subPages||[]).map(sp => `
+                                    <span style="background:var(--gold);color:var(--navy);
+                                          font-size:.6rem;font-weight:800;padding:3px 8px;
+                                          border-radius:3px;text-transform:uppercase;">${sp.title}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <!-- Text side -->
+                        <div style="padding:20px;background:var(--white);">
+                            <div id="previewTitle" style="font-size:1.1rem;font-weight:800;
+                                 color:var(--navy);margin-bottom:8px;">
+                                ${service.name || service.title || 'Nom du service'}
+                            </div>
+                            <div id="previewDesc" style="font-size:.85rem;color:var(--gray-dark);
+                                 line-height:1.6;margin-bottom:16px;">
+                                ${service.description || 'Description du service…'}
+                            </div>
+                            <div id="previewSubNav" style="display:flex;flex-wrap:wrap;gap:6px;">
+                                ${(service.subPages||[]).map((sp,i) => `
+                                    <button style="padding:6px 14px;border-radius:4px;font-size:.75rem;
+                                            font-weight:700;cursor:pointer;border:none;
+                                            background:${i===0?'var(--navy)':'var(--gray-light)'};
+                                            color:${i===0?'var(--white)':'var(--gray-dark)'};">
+                                        ${sp.title}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /grid -->
+        `;
+
+        document.body.appendChild(overlay);
+
+        // ── Populate sub-pages ─────────────────────────────────────────
+        const subPages = service.subPages ? [...service.subPages] : [];
+        const subList  = overlay.querySelector('#subPagesList');
+
+        const renderSubList = () => {
+            subList.innerHTML = subPages.map((sp, i) => `
+                <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;"
+                     data-idx="${i}">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <input class="sp-title" type="text" value="${sp.title}"
+                               placeholder="Titre ex: FONDATIONS"
+                               style="padding:8px 10px;border:1.5px solid var(--gray-light);
+                                      border-radius:var(--radius-sm);font-size:.82rem;
+                                      font-family:var(--font);width:100%;outline:none;">
+                        <textarea class="sp-desc" rows="2" placeholder="Description (optionnel)"
+                                  style="padding:8px 10px;border:1.5px solid var(--gray-light);
+                                         border-radius:var(--radius-sm);font-size:.78rem;
+                                         font-family:var(--font);width:100%;resize:none;outline:none;"
+                                  >${sp.description || ''}</textarea>
+                    </div>
+                    <button class="sp-del" data-idx="${i}"
+                            style="padding:6px 10px;background:rgba(192,57,43,.1);
+                                   border:1px solid rgba(192,57,43,.2);border-radius:var(--radius-sm);
+                                   color:var(--danger);cursor:pointer;font-size:.8rem;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('') || '<p style="font-size:.8rem;color:var(--gray);">Aucune sous-page.</p>';
+
+            // Bind delete
+            subList.querySelectorAll('.sp-del').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    subPages.splice(+btn.dataset.idx, 1);
+                    renderSubList();
+                    updatePreview();
                 });
-            }
-        }, 10);
-    }
+            });
+            // Live update preview on input change
+            subList.querySelectorAll('.sp-title,.sp-desc').forEach(inp => {
+                inp.addEventListener('input', () => {
+                    subList.querySelectorAll('[data-idx]').forEach(row => {
+                        const idx  = +row.dataset.idx;
+                        const t    = row.querySelector('.sp-title')?.value || '';
+                        const d    = row.querySelector('.sp-desc')?.value  || '';
+                        if (subPages[idx]) { subPages[idx].title = t; subPages[idx].description = d; }
+                    });
+                    updatePreview();
+                });
+            });
+        };
+        renderSubList();
 
-    async editService(id) {
-        try {
-            const services = await this.apiCall('/api/content/services');
-            const service = services.find(s => s._id === id);
-            if (!service) {
-                this.showNotification('Service non trouvé', 'error');
+        // ── Live preview updater ───────────────────────────────────────
+        const updatePreview = () => {
+            const name = overlay.querySelector('#svcName')?.value || '';
+            const desc = overlay.querySelector('#svcDesc')?.value || '';
+            overlay.querySelector('#previewTitle').textContent = name || 'Nom du service';
+            overlay.querySelector('#previewDesc').textContent  = desc || 'Description du service…';
+            overlay.querySelector('#previewTags').innerHTML = subPages.map(sp =>
+                `<span style="background:var(--gold);color:var(--navy);font-size:.6rem;
+                 font-weight:800;padding:3px 8px;border-radius:3px;text-transform:uppercase;">
+                 ${sp.title}</span>`
+            ).join('');
+            overlay.querySelector('#previewSubNav').innerHTML = subPages.map((sp, i) =>
+                `<button style="padding:6px 14px;border-radius:4px;font-size:.75rem;font-weight:700;
+                  border:none;background:${i===0?'var(--navy)':'var(--gray-light)'};
+                  color:${i===0?'var(--white)':'var(--gray-dark)'};">${sp.title}</button>`
+            ).join('');
+        };
+
+        overlay.querySelector('#svcName')?.addEventListener('input', updatePreview);
+        overlay.querySelector('#svcDesc')?.addEventListener('input', updatePreview);
+
+        // ── Add sub-page ──────────────────────────────────────────────
+        overlay.querySelector('#addSubPageBtn').addEventListener('click', () => {
+            subPages.push({ title: '', description: '' });
+            renderSubList();
+        });
+
+        // ── Image file preview ────────────────────────────────────────
+        overlay.querySelector('#svcImageFile').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            overlay.querySelector('#svcImageName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                overlay.querySelector('#svcImgPreview').innerHTML =
+                    `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+                overlay.querySelector('#previewImg').innerHTML =
+                    `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ── Back button ───────────────────────────────────────────────
+        overlay.querySelector('#svcBackBtn').addEventListener('click', () => {
+            overlay.remove();
+        });
+
+        // ── Save ──────────────────────────────────────────────────────
+        overlay.querySelector('#svcSaveBtn').addEventListener('click', async () => {
+            console.log('--- Save button clicked ---');
+            // Collect sub-pages from DOM before saving
+            subList.querySelectorAll('[data-idx]').forEach(row => {
+                const idx = +row.dataset.idx;
+                if (subPages[idx]) {
+                    subPages[idx].title       = row.querySelector('.sp-title')?.value.trim() || '';
+                    subPages[idx].description = row.querySelector('.sp-desc')?.value.trim()  || '';
+                }
+            });
+            console.log('subPages before filter:', subPages);
+            const validSubPages = subPages.filter(sp => sp.title);
+            console.log('validSubPages:', validSubPages);
+
+            const name     = overlay.querySelector('#svcName').value.trim();
+            const category = overlay.querySelector('#svcCategory').value.trim();
+            const desc     = overlay.querySelector('#svcDesc').value.trim();
+            const icon     = overlay.querySelector('#svcIcon').value.trim() || 'fa-cogs';
+            const imgFile  = overlay.querySelector('#svcImageFile').files[0];
+
+            if (!name || !category || !desc) {
+                this.showNotification('Nom, catégorie et description sont obligatoires.', 'error');
                 return;
             }
 
-            const modal = this.createModal('Modifier le service', this.getServiceForm(service));
-            document.body.appendChild(modal);
+            const saveBtn = overlay.querySelector('#svcSaveBtn');
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…';
+            saveBtn.disabled  = true;
 
-            setTimeout(() => {
-                const saveBtn = modal.querySelector('#saveServiceBtn');
-                const closeBtn = modal.querySelector('.modal-close');
-                const overlay = modal.querySelector('.modal-overlay');
+            try {
+                const token = localStorage.getItem('akime_token');
+                const fd    = new FormData();
+                fd.append('name',        name);
+                fd.append('title',       name);
+                fd.append('category',    category);
+                fd.append('description', desc);
+                fd.append('icon',        icon);
+                fd.append('subPages',    JSON.stringify(validSubPages));
+                if (imgFile) fd.append('image', imgFile);
 
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => this.saveService(modal, id));
+                console.log('FormData entries:');
+                for (let [key, value] of fd.entries()) {
+                    console.log(`- ${key}:`, value);
                 }
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => this.closeModal(modal));
-                }
-                if (overlay) {
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) {
-                            this.closeModal(modal);
-                        }
-                    });
-                }
-            }, 10);
-        } catch (error) {
-            console.error('Error loading service:', error);
-            this.showNotification('Erreur lors du chargement du service', 'error');
-        }
+
+                const url    = serviceId ? `${this.apiBase}/content/services/${serviceId}` : `${this.apiBase}/content/services`;
+                const method = serviceId ? 'PUT' : 'POST';
+                console.log('Request URL:', url, 'Method:', method);
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: fd,
+                });
+                const result = await res.json();
+                console.log('Server response:', result);
+                
+                if (!result.success) throw new Error(result.message || 'Erreur serveur');
+
+                this.showNotification(serviceId ? '✅ Service modifié !' : '✅ Service ajouté !', 'success');
+                overlay.remove();
+                await this.loadServicesSection();
+                this.refreshPreview();
+
+            } catch (err) {
+                this.showNotification('❌ ' + err.message, 'error');
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                saveBtn.disabled  = false;
+            }
+        });
     }
+
+    // Keep addService / editService as aliases for backward compat
+    addService()        { this.showServiceForm(); }
+    async editService(id) { this.showServiceForm(id); }
 
     async deleteService(id) {
     if (!confirm("Voulez-vous vraiment supprimer ce service ?")) return;
@@ -2889,186 +3194,10 @@ validateFileSize(file, maxSizeMB = 100) {
     return true;
 }
 
-    getServiceForm(service = {}) {
-    return `
-        <form id="serviceEditForm">
-            <!-- Titre -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Titre du service</label>
-                <input type="text" id="serviceTitle" value="${service.title || ''}" required style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                ">
-            </div>
+    getServiceForm(service = {}) { return ''; } // logic moved to showServiceForm
 
-            <!-- Catégorie -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Catégorie</label>
-                <input type="text" id="serviceCategory" value="${service.category || ''}" required style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                ">
-            </div>
+async saveService(modal, serviceId = null) { } // logic moved to showServiceForm
 
-            <!-- Description -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Description</label>
-                <textarea id="serviceDescription" rows="4" required style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                    resize: vertical;
-                ">${service.description || ''}</textarea>
-            </div>
-
-            <!-- Image -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Image (URL)</label>
-                <input type="text" id="serviceImage" value="${service.imageUrl || ''}" placeholder="ex: images/service.jpg" style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                ">
-            </div>
-
-            <!-- Prix -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Prix (optionnel)</label>
-                <input type="text" id="servicePrice" value="${service.price || 'Sur devis'}" style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                ">
-            </div>
-
-            <!-- Features -->
-            <div class="form-group" style="margin-bottom: 30px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Caractéristiques (une par ligne)</label>
-                <textarea id="serviceFeatures" rows="4" style="
-                    width: 100%;
-                    padding: 10px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                    resize: vertical;
-                ">${service.features ? service.features.join('\n') : ''}</textarea>
-            </div>
-
-            <!-- Actions -->
-            <div class="form-actions" style="display: flex; gap: 15px; justify-content: flex-end;">
-                <button type="button" class="modal-close" style="
-                    padding: 10px 20px;
-                    border: 2px solid #e1e5e9;
-                    background: white;
-                    color: #666;
-                    border-radius: 8px;
-                    cursor: pointer;
-                ">Annuler</button>
-                <button type="button" id="saveServiceBtn" style="
-                    padding: 10px 20px;
-                    border: none;
-                    background: linear-gradient(135deg, #0056b3, #004a99);
-                    color: white;
-                    border-radius: 8px;
-                    cursor: pointer;
-                ">
-                    <i class="fas fa-save"></i> Enregistrer
-                </button>
-            </div>
-        </form>
-
-        <script>
-            document.getElementById("saveServiceBtn").addEventListener("click", async () => {
-                const modal = document.getElementById("serviceEditForm");
-                await adminDashboard.saveService(modal, "${service._id || ''}");
-                adminDashboard.refreshPreview(); // 🔄 Mise à jour temps réel services.html
-            });
-        </script>
-    `;
-}
-
-
-
-async saveService(modal, serviceId = null) {
-    const formData = {
-        title: modal.querySelector('#serviceTitle').value,
-        category: modal.querySelector('#serviceCategory').value,
-        description: modal.querySelector('#serviceDescription').value,
-        imageUrl: modal.querySelector('#serviceImage')?.value || "",
-        price: modal.querySelector('#servicePrice')?.value || "Sur devis",
-        features: modal.querySelector('#serviceFeatures')?.value
-            ? modal.querySelector('#serviceFeatures').value.split('\n') // séparées par ligne
-            : []
-    };
-
-
-    // Validation
-    if (!formData.title || !formData.category || !formData.description) {
-        this.showNotification('Veuillez remplir tous les champs obligatoires', 'error');
-        return;
-    }
-
-    const saveBtn = modal.querySelector('#saveServiceBtn');
-    const originalText = saveBtn.innerHTML;
-
-    try {
-        // Loading state
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
-        saveBtn.disabled = true;
-
-        const token = localStorage.getItem("akime_token");
-
-        const url = serviceId 
-            ? `${this.apiBase}/content/services/${serviceId}` 
-            : `${this.apiBase}/content/services`;
-
-        const method = serviceId ? "PUT" : "POST";
-
-        const res = await fetch(url, {
-            method,
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Erreur serveur (${res.status}): ${errorText}`);
-        }
-
-        const result = await res.json();
-
-        if (result.success) {
-            this.closeModal(modal);
-            await this.loadServicesSection();  // 🔄 rafraîchir la liste côté admin
-            this.refreshPreview();             // 🔄 mettre à jour services.html en temps réel
-
-            const message = serviceId 
-                ? "✅ Service modifié avec succès !" 
-                : "✅ Service ajouté avec succès !";
-
-            this.showNotification(message, "success");
-        } else {
-            throw new Error(result.message || "Erreur lors de la sauvegarde");
-        }
-
-    } catch (error) {
-        console.error("Error saving service:", error);
-        this.showNotification("❌ " + error.message, "error");
-    } finally {
-        // Reset button
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    }
-}
 
 
 

@@ -138,7 +138,6 @@ Par défaut, le site sera dispo sur :\
 
 ### 🔸 Projects
 
-
     GET    /api/content/projects
     GET    /api/content/projects/:id
     POST   /api/content/projects

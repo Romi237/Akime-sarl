@@ -182,25 +182,68 @@ router.delete('/projects/:id', adminOrEditor(), async (req, res) => {
 // ----------------- Services CRUD ---------------
 // ===============================================
 router.get('/services', async (req, res) => {
-  const items = await Service.find().sort({ createdAt: -1 });
-  res.json({ success: true, data: items });
+  try {
+    const items = await Service.find().sort({ order: 1, createdAt: -1 });
+    res.json({ success: true, data: items });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-router.post('/services', adminOrEditor(), async (req, res) => {
+router.get('/services/:id', async (req, res) => {
   try {
-    const item = await Service.create(req.body);
+    const item = await Service.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Service not found' });
     res.json({ success: true, data: item });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 });
 
-router.put('/services/:id', adminOrEditor(), async (req, res) => {
+router.post('/services', adminOrEditor(), upload.single('image'), async (req, res) => {
   try {
-    const item = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    console.log('POST /api/content/services - req.body:', req.body);
+    console.log('POST /api/content/services - req.file:', req.file);
+    const data = { ...req.body };
+    if (req.file) data.imageUrl = `/uploads/general/${req.file.filename}`;
+    // subPages comes as JSON string from FormData
+    if (data.subPages && typeof data.subPages === 'string') {
+      try { data.subPages = JSON.parse(data.subPages); } catch { data.subPages = []; }
+    }
+    console.log('POST /api/content/services - data.subPages after parse:', data.subPages);
+    if (data.features && typeof data.features === 'string') {
+      data.features = data.features.split('\n').map(f => f.trim()).filter(Boolean);
+    }
+    if (!data.name) data.name = data.title;
+    const item = await Service.create(data);
+    console.log('POST /api/content/services - created service:', item);
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.error('POST /api/content/services - error:', err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/services/:id', adminOrEditor(), upload.single('image'), async (req, res) => {
+  try {
+    console.log('PUT /api/content/services/:id - req.body:', req.body);
+    console.log('PUT /api/content/services/:id - req.file:', req.file);
+    const data = { ...req.body };
+    if (req.file) data.imageUrl = `/uploads/general/${req.file.filename}`;
+    if (data.subPages && typeof data.subPages === 'string') {
+      try { data.subPages = JSON.parse(data.subPages); } catch { data.subPages = []; }
+    }
+    console.log('PUT /api/content/services/:id - data.subPages after parse:', data.subPages);
+    if (data.features && typeof data.features === 'string') {
+      data.features = data.features.split('\n').map(f => f.trim()).filter(Boolean);
+    }
+    if (!data.name) data.name = data.title;
+    const item = await Service.findByIdAndUpdate(req.params.id, data, { new: true });
+    console.log('PUT /api/content/services/:id - updated service:', item);
     if (!item) return res.status(404).json({ success: false, message: 'Service not found' });
     res.json({ success: true, data: item });
   } catch (err) {
+    console.error('PUT /api/content/services/:id - error:', err);
     res.status(400).json({ success: false, message: err.message });
   }
 });

@@ -131,11 +131,12 @@ app.get('/:page.html', (req, res) => {
   });
 });
 
-// ── Debug / test routes ───────────────────────────────────────────────────────
-app.get('/debug-uploads', (req, res) => {
-  fs.readdir(path.join(__dirname, 'uploads'))
-    .then(files => res.json({ uploads: files }))
-    .catch(err  => res.status(500).json({ error: err.message }));
+// Debug / test routes
+app.get('/test-services', async (req, res) => {
+  const Service = require('./api/models/Service');
+  const services = await Service.find();
+  console.log('Services from DB:', JSON.stringify(services, null, 2));
+  res.json({ success: true, data: services });
 });
 
 // ── Global Error Handler ─────────────────────────────────────────────────

@@ -49,19 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Re-attach menu toggle listener
       const newMenuToggle = document.getElementById('menuToggle');
-      const navLinksEl = document.getElementById('navLinks');
-      if (newMenuToggle && navLinksEl) {
-        newMenuToggle.setAttribute('aria-expanded', 'false');
-        newMenuToggle.addEventListener('click', () => {
-          const isOpen = navLinksEl.classList.toggle('active');
-          newMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-          document.body.style.overflow = isOpen ? 'hidden' : '';
+      const navLinksElInner = document.getElementById('navLinks');
+      if (newMenuToggle && navLinksElInner) {
+        newMenuToggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navLinksElInner.classList.toggle('mobile-open');
+          newMenuToggle.classList.toggle('open');
         });
-        navLinksEl.querySelectorAll('a').forEach(a => {
+        navLinksElInner.querySelectorAll('a').forEach(a => {
           a.addEventListener('click', () => {
-            navLinksEl.classList.remove('active');
-            newMenuToggle.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
+            navLinksElInner.classList.remove('mobile-open');
+            newMenuToggle.classList.remove('open');
           });
         });
       }
@@ -102,33 +100,128 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuToggle = document.getElementById('menuToggle');
   const navLinksEl = document.getElementById('navLinks');
   if (menuToggle && navLinksEl) {
-    menuToggle.setAttribute('aria-expanded', 'false');
-    menuToggle.addEventListener('click', () => {
-      const isOpen = navLinksEl.classList.toggle('active');
-      menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      document.body.style.overflow = isOpen ? 'hidden' : '';
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navLinksEl.classList.toggle('mobile-open');
+      menuToggle.classList.toggle('open');
     });
     navLinksEl.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', () => {
-        navLinksEl.classList.remove('active');
-        menuToggle.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+        navLinksEl.classList.remove('mobile-open');
+        menuToggle.classList.remove('open');
       });
+    });
+    document.addEventListener('click', e => {
+      if (!menuToggle.contains(e.target) && !navLinksEl.contains(e.target)) {
+        navLinksEl.classList.remove('mobile-open');
+        menuToggle.classList.remove('open');
+      }
     });
   }
 
-  // ── Service tabs ─────────────────────────────────────────
-  const tabs = document.querySelectorAll('.service-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const panelId = tab.dataset.panel;
-      document.querySelectorAll('.service-panel').forEach(p => p.classList.remove('active'));
-      const target = document.getElementById('panel-' + panelId);
-      if (target) target.classList.add('active');
-    });
-  });
+  // ── Services from API (replaces static tabs) ─────────────
+  async function loadServicesPublic() {
+    try {
+      const res      = await fetch('/api/content/services');
+      const json     = await res.json();
+      const services = json.data;
+      const tabsEl   = document.getElementById('servicesTabs');
+      const panelEl  = document.getElementById('servicesPanel');
+      if (!tabsEl || !panelEl) return;
+
+      if (!Array.isArray(services) || services.length === 0) {
+        tabsEl.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.4);font-size:.82rem;">Aucun service disponible.</div>';
+        panelEl.innerHTML = '';
+        return;
+      }
+
+      // Tabs
+      tabsEl.innerHTML = services.map((s, i) => `
+        <div class="service-tab ${i===0?'active':''}" data-idx="${i}">
+          <div class="tab-icon"><i class="fas ${s.icon||'fa-cogs'}"></i></div>
+          <span class="tab-name">${s.name||s.title}</span>
+          <i class="fas fa-chevron-right tab-arrow"></i>
+        </div>`).join('');
+
+      // Panels
+      panelEl.innerHTML = services.map((s, i) => {
+        const imgHTML = s.imageUrl
+          ? `<img src="${s.imageUrl}" alt="${s.name||s.title}" style="width:100%;height:100%;object-fit:cover;">`
+          : `<div class="panel-image-placeholder"><i class="fas ${s.icon||'fa-cogs'}"></i><span>${s.name||s.title}</span></div>`;
+        const tagsHTML = (s.subPages||[]).map(sp =>
+          `<span class="panel-tag sp-tag" data-title="${sp.title}"
+                 data-desc="${(sp.description||'').replace(/"/g,'&quot;')}">${sp.title}</span>`
+        ).join('');
+        const firstSp   = s.subPages && s.subPages.length > 0 ? s.subPages[0] : null;
+        const initTitle = firstSp ? firstSp.title : (s.name||s.title);
+        const initDesc  = firstSp ? (firstSp.description||s.description) : s.description;
+        return `
+          <div class="service-panel ${i===0?'active':''}" id="panel-api-${i}">
+            <div class="panel-image" style="position:relative;">
+              ${imgHTML}
+              <div class="panel-tags">${tagsHTML}</div>
+            </div>
+            <div class="panel-body">
+              <h3 class="panel-title sp-title">${initTitle}</h3>
+              <div class="sp-subnav" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                ${(s.subPages||[]).map((sp,j)=>`
+                  <button class="sp-nav-btn" data-title="${sp.title}"
+                          data-desc="${(sp.description||'').replace(/"/g,'&quot;')}"
+                          style="padding:5px 12px;border-radius:4px;font-size:.72rem;font-weight:700;
+                          cursor:pointer;border:none;font-family:inherit;
+                          background:${j===0?'var(--navy)':'var(--gray-light)'};
+                          color:${j===0?'var(--white)':'var(--gray-dark)'};">
+                    ${sp.title}
+                  </button>`).join('')}
+              </div>
+              <p class="panel-desc sp-desc">${initDesc||s.description||''}</p>
+              <a href="#contact" class="btn btn-navy">DEMANDER UN DEVIS <i class="fas fa-chevron-right"></i></a>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Tab switching
+      tabsEl.querySelectorAll('.service-tab').forEach((tab, i) => {
+        tab.addEventListener('click', () => {
+          tabsEl.querySelectorAll('.service-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          panelEl.querySelectorAll('.service-panel').forEach(p => p.classList.remove('active'));
+          panelEl.querySelector(`#panel-api-${i}`)?.classList.add('active');
+        });
+      });
+
+      // Sub-page nav btn click
+      panelEl.addEventListener('click', e => {
+        const btn = e.target.closest('.sp-nav-btn');
+        if (!btn) return;
+        const panel = btn.closest('.service-panel');
+        panel.querySelectorAll('.sp-nav-btn').forEach(b => {
+          b.style.background = 'var(--gray-light)'; b.style.color = 'var(--gray-dark)';
+        });
+        btn.style.background = 'var(--navy)'; btn.style.color = 'var(--white)';
+        panel.querySelector('.sp-desc').textContent  = btn.dataset.desc  || '';
+        panel.querySelector('.sp-title').textContent = btn.dataset.title || '';
+        panel.querySelectorAll('.sp-tag').forEach(tag => {
+          tag.style.opacity = tag.dataset.title === btn.dataset.title ? '1' : '0.5';
+        });
+      });
+
+      // Tag click = same as nav btn
+      panelEl.addEventListener('click', e => {
+        const tag = e.target.closest('.sp-tag');
+        if (!tag) return;
+        const panel  = tag.closest('.service-panel');
+        const navBtn = panel.querySelector(`.sp-nav-btn[data-title="${tag.dataset.title}"]`);
+        if (navBtn) navBtn.click();
+      });
+
+    } catch (err) {
+      console.error('loadServicesPublic error:', err);
+    }
+  }
+  loadServicesPublic();
+
+
 
   // ── Portfolio filter ─────────────────────────────────────
   let filterBtns = document.querySelectorAll('.filter-btn');
@@ -460,84 +553,85 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const equipmentData = {
-    list: []
-  };
-
   loadCompany();
   loadProjects();
   loadTestimonials();
-  loadEquipmentCards();
-  initEquipmentFilter();
 
-  // ── Equipment showcase ─────────────────────────────────────
-  async function loadEquipmentCards() {
-    try {
-      const res = await fetch('/api/content/equipment');
-      const json = await res.json();
-      equipmentData.list = Array.isArray(json.data) ? json.data : [];
-      renderEquipmentCards('all');
-    } catch (e) {
-      console.error('Error loading equipment:', e);
-      const grid = document.getElementById('equipmentShowcaseGrid');
-      if (grid) {
-        grid.innerHTML = '<p class="empty-state">Impossible de charger les équipements pour le moment.</p>';
+  // ── Testimonial Submission Form ─────────────────────────────────
+  const testimonialSubmitForm = document.getElementById('testimonialSubmitForm');
+  const testimonialSubmitSuccess = document.getElementById('testimonialSubmitSuccess');
+  const ratingStars = document.querySelectorAll('.rating-star');
+  const ratingInput = document.getElementById('ratingInput');
+
+  // Initialize star rating
+  function initRating() {
+    const currentRating = parseInt(ratingInput.value) || 5;
+    ratingStars.forEach((star, index) => {
+      if (index < currentRating) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
       }
-    }
+    });
   }
 
-  function renderEquipmentCards(category = 'all') {
-    const grid = document.getElementById('equipmentShowcaseGrid');
-    if (!grid) return;
+  initRating();
 
-    const categoryLabels = {
-      excavation: 'Excavation',
-      levage: 'Levage',
-      transport: 'Transport',
-      compactage: 'Compactage',
-      outillage: 'Outillage',
-      divers: 'Divers'
-    };
-
-    const filtered = category === 'all'
-      ? equipmentData.list
-      : equipmentData.list.filter(eq => eq.category === category);
-
-    if (!filtered.length) {
-      grid.innerHTML = '<p class="empty-state">Aucun équipement disponible pour cette catégorie.</p>';
-      return;
-    }
-
-    grid.innerHTML = filtered.slice(0, 6).map(eq => {
-      const image = eq.imageUrl
-        ? `<img src="${eq.imageUrl}" alt="${eq.name}" loading="lazy">`
-        : `<i class="fas fa-tools"></i>`;
-
-      return `
-        <article class="equipment-showcase-card">
-          <div class="equipment-showcase-image">${image}</div>
-          <div class="equipment-showcase-body">
-            <h3 class="equipment-showcase-title">${eq.name}</h3>
-            <div class="equipment-showcase-meta">
-              ${eq.category ? `<span>${categoryLabels[eq.category] || eq.category}</span>` : ''}
-              ${eq.brand ? `<span>${eq.brand}</span>` : ''}
-            </div>
-            <p class="equipment-showcase-description">${eq.description || 'Équipement professionnel disponible pour vos chantiers.'}</p>
-          </div>
-        </article>`;
-    }).join('');
-  }
-
-  function initEquipmentFilter() {
-    const buttons = document.querySelectorAll('#equipmentFilter .filter-btn');
-    if (!buttons.length) return;
-
-    buttons.forEach(button => {
-      button.addEventListener('click', () => {
-        buttons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        renderEquipmentCards(button.dataset.category || 'all');
+  ratingStars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      const rating = index + 1;
+      ratingInput.value = rating;
+      ratingStars.forEach((s, i) => {
+        if (i < rating) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
       });
+    });
+
+    star.addEventListener('mouseover', () => {
+      const rating = index + 1;
+      ratingStars.forEach((s, i) => {
+        if (i < rating) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+    });
+  });
+
+  document.querySelector('.rating-input').addEventListener('mouseleave', () => {
+    initRating();
+  });
+
+  if (testimonialSubmitForm) {
+    testimonialSubmitForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = testimonialSubmitForm.querySelector('.btn-submit');
+      btn.textContent = 'Envoi en cours…';
+      btn.disabled = true;
+
+      const data = Object.fromEntries(new FormData(testimonialSubmitForm));
+      try {
+        const res = await fetch('/api/testimonials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (json.success) {
+          testimonialSubmitForm.style.display = 'none';
+          testimonialSubmitSuccess.style.display = 'block';
+        } else {
+          throw new Error(json.message || 'Erreur');
+        }
+      } catch (err) {
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+        btn.textContent = 'ENVOYER VOTRE TÉMOIGNAGE';
+        btn.disabled = false;
+      }
     });
   }
 });
